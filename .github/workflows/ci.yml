@@ -9,9 +9,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  
   backend:
     name: Backend - Build & Test
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - name: Checkout repository
