@@ -12,12 +12,21 @@ public class TicketsController : ControllerBase
     private readonly ITicketService _ticketService;
     private readonly IEmployeeService _employeeService;
     private readonly IEmployeeProfileService _employeeProfileService;
+    private readonly IAiAnalysisService _aiAnalysisService;
+    private readonly IRecommendationService _recommendationService;
 
-    public TicketsController(ITicketService ticketService, IEmployeeService employeeService, IEmployeeProfileService employeeProfileService)
+    public TicketsController(
+        ITicketService ticketService,
+        IEmployeeService employeeService,
+        IEmployeeProfileService employeeProfileService,
+        IAiAnalysisService aiAnalysisService,
+        IRecommendationService recommendationService)
     {
         _ticketService = ticketService;
         _employeeService = employeeService;
         _employeeProfileService = employeeProfileService;
+        _aiAnalysisService = aiAnalysisService;
+        _recommendationService = recommendationService;
     }
 
     // GET: api/tickets
@@ -65,6 +74,43 @@ public class TicketsController : ControllerBase
         return Ok(tickets);
     }
 
+    // GET: api/tickets/1/analysis
+    [HttpGet("{id}/analysis")]
+    public async Task<IActionResult> GetAnalysis(int id)
+    {
+        var ticket = await _ticketService.GetByIdAsync(id);
+
+        if (ticket == null)
+        {
+            return NotFound($"Ticket with ID {id} was not found.");
+        }
+
+        var analysis = await _aiAnalysisService.GetByTicketIdAsync(id);
+
+        if (analysis == null)
+        {
+            return NotFound($"No analysis found for ticket {id}.");
+        }
+
+        return Ok(analysis);
+    }
+
+    // POST: api/tickets/1/analyze
+    [HttpPost("{id}/analyze")]
+    public async Task<IActionResult> Analyze(int id)
+    {
+        var ticket = await _ticketService.GetByIdAsync(id);
+
+        if (ticket == null)
+        {
+            return NotFound($"Ticket with ID {id} was not found.");
+        }
+
+        var analysis = await _aiAnalysisService.AnalyzeAsync(id);
+
+        return Ok(analysis);
+    }
+
     // POST: api/tickets
     [HttpPost]
     public async Task<IActionResult> Create(Ticket ticket)
@@ -78,6 +124,7 @@ public class TicketsController : ControllerBase
         );
     }
 
+    
     // PUT: api/tickets/1
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, Ticket ticket)
@@ -92,6 +139,13 @@ public class TicketsController : ControllerBase
 
         if (existingTicket != null)
         {
+            // Invalidate AI analysis when ticket content changes
+            if (existingTicket.Title != updatedTicket.Title ||
+                existingTicket.Description != updatedTicket.Description)
+            {
+                await _aiAnalysisService.DeleteAsync(id);
+            }
+
             if (existingTicket.Status == TicketStatus.Resolved &&
                 existingTicket.AssignedEmployeeId.HasValue)
             {
@@ -113,6 +167,7 @@ public class TicketsController : ControllerBase
 
         return Ok(updatedTicket);
     }
+
 
     // POST: api/tickets/1/assign?employeeId=2
     [HttpPost("{id}/assign")]
@@ -176,6 +231,7 @@ public class TicketsController : ControllerBase
         return Ok(resolvedTicket);
     }
 
+
     // DELETE: api/tickets/1
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
@@ -188,6 +244,9 @@ public class TicketsController : ControllerBase
             return NotFound($"Ticket with ID {id} was not found.");
         }
 
+        // Remove stored AI analysis
+        await _aiAnalysisService.DeleteAsync(id);
+
         if (ticket != null &&
             ticket.Status == TicketStatus.Resolved &&
             ticket.AssignedEmployeeId.HasValue)
@@ -199,4 +258,24 @@ public class TicketsController : ControllerBase
 
         return Ok("Ticket deleted successfully.");
     }
+
+    // GET: api/tickets/1/recommendations
+    [HttpGet("{id}/recommendations")]
+    public async Task<IActionResult> GetRecommendations(int id)
+    {
+        try
+        {
+            var recommendations = await _recommendationService.GetRecommendationsAsync(id);
+            return Ok(recommendations);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
 }
