@@ -3,6 +3,9 @@
 
 An AI-powered assistant that helps IT support teams efficiently assign tickets to the most suitable team members.
 
+**Author:** Soufiane Boufarache  
+**Email:** soufianeboufarache@gmail.com
+
 ## About TicketCompass
 
 I developed TicketCompass to improve the way IT support teams assign tickets and make better use of existing experience within the team.
