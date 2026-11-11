@@ -1,0 +1,58 @@
+.employees-page {
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.employees-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.employees-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.employee-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 2fr) minmax(170px, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 20px 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.employee-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.employee-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  color: #4338ca;
+  font-weight: 700;
+}
+
+.employee-skills,
+.employee-capacity {
+  min-width: 0;
+}
+
+@media (max-width: 800px) {
+  .employees-page { padding: 16px; }
+  .employee-row { grid-template-columns: 1fr; gap: 14px; }
+}

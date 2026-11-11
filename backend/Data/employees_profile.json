@@ -1,0 +1,38 @@
+[
+  {
+    "EmployeeId": 1,
+    "Summary": "Alex specializes in VPN connectivity, networking, firewall and DNS troubleshooting, and security-related incidents.",
+    "GeneratedAt": "2026-11-09T10:00:00Z",
+    "IsOutdated": false
+  },
+  {
+    "EmployeeId": 2,
+    "Summary": "Sarah develops and troubleshoots C# and ASP.NET Core APIs, SQL integrations and middleware, including authentication.",
+    "GeneratedAt": "2026-11-09T10:00:00Z",
+    "IsOutdated": false
+  },
+  {
+    "EmployeeId": 3,
+    "Summary": "Daniel has resolved Docker, Kubernetes and GitHub Actions CI/CD incidents, including container networking and deployment failures.",
+    "GeneratedAt": "2026-11-09T10:00:00Z",
+    "IsOutdated": false
+  },
+  {
+    "EmployeeId": 4,
+    "Summary": "Jane specializes in React and TypeScript frontends, MUI interfaces, form handling and API integrations.",
+    "GeneratedAt": "2026-11-09T10:00:00Z",
+    "IsOutdated": false
+  },
+  {
+    "EmployeeId": 5,
+    "Summary": "John works with AWS, Python, LiteLLM and cloud API integrations, including IAM permissions and AI provider configuration.",
+    "GeneratedAt": "2026-11-09T10:00:00Z",
+    "IsOutdated": false
+  },
+  {
+    "EmployeeId": 6,
+    "Summary": "Emily works with Python automation, encryption and security, and supports Kubernetes and CI/CD workflows.",
+    "GeneratedAt": "2026-11-09T10:00:00Z",
+    "IsOutdated": false
+  }
+]

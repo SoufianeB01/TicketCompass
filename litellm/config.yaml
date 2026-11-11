@@ -1,0 +1,23 @@
+model_list:
+  - model_name: openai
+    litellm_params:
+      model: os.environ/OPENAI_MODEL
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: claude
+    litellm_params:
+      model: os.environ/CLAUDE_MODEL
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: gemini
+    litellm_params:
+      model: os.environ/GEMINI_MODEL
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: ollama
+    litellm_params:
+      model: os.environ/OLLAMA_MODEL
+      api_base: os.environ/OLLAMA_API_BASE
+
+litellm_settings:
+  drop_params: true

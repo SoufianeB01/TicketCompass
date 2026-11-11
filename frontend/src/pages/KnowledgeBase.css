@@ -1,0 +1,95 @@
+.knowledge-base-page {
+  width: 100%;
+  max-width: 1200px;
+  padding: 24px;
+  margin: 0 auto;
+}
+
+.knowledge-base-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.knowledge-category {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.knowledge-category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  cursor: pointer;
+  background: #fafbff;
+}
+
+.knowledge-category-header:hover {
+  background: #f3f4f9;
+}
+
+.knowledge-category-header:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: -2px;
+}
+
+.knowledge-table {
+  min-width: 750px;
+}
+
+.knowledge-table thead {
+  background: #f8fafc;
+}
+
+.knowledge-table th {
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.knowledge-table td {
+  padding: 14px 16px;
+  vertical-align: top;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.knowledge-table-row {
+  cursor: pointer;
+}
+
+.knowledge-table-row:hover {
+  background: #f8faff;
+}
+
+.knowledge-ticket-cell {
+  min-width: 220px;
+  width: 30%;
+}
+
+.knowledge-resolution-cell {
+  min-width: 250px;
+  width: 40%;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.knowledge-date-cell {
+  white-space: nowrap;
+  color: #64748b;
+}
+
+@media (max-width: 600px) {
+  .knowledge-base-page {
+    padding: 16px;
+  }
+
+  .knowledge-base-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
