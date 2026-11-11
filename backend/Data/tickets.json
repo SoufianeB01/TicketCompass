@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "Id": 1,
+    "Title": "VPN connection fails after Windows update",
+    "Description": "Several employees cannot connect to the company VPN after installing the latest Windows update. The VPN client displays an authentication timeout error.",
+    "RequiredSkills": [],
+    "Priority": "High",
+    "Status": "Open",
+    "CreatedAt": "2026-11-09T09:00:00Z",
+    "AssignedEmployeeId": null,
+    "Resolution": null,
+    "ResolvedAt": null
+  },
+  {
+    "Id": 2,
+    "Title": "Internal API returns HTTP 500",
+    "Description": "The internal order management API intermittently returns HTTP 500 when retrieving order details. Application logs show database connection timeout errors.",
+    "RequiredSkills": ["C#", ".NET", "SQL"],
+    "Priority": "Critical",
+    "Status": "InProgress",
+    "CreatedAt": "2026-11-08T10:30:00Z",
+    "AssignedEmployeeId": 2,
+    "Resolution": null,
+    "ResolvedAt": null
+  },
+  {
+    "Id": 3,
+    "Title": "Docker container cannot connect to database",
+    "Description": "A backend service running in Docker could not connect to its PostgreSQL database because the container was using an incorrect hostname.",
+    "RequiredSkills": ["Docker", "Networking"],
+    "Priority": "Medium",
+    "Status": "Resolved",
+    "CreatedAt": "2026-11-05T08:00:00Z",
+    "AssignedEmployeeId": 3,
+    "Resolution": "Updated the database hostname in the Docker Compose configuration and verified connectivity.",
+    "ResolvedAt": "2026-11-05T11:45:00Z"
+  }
+]

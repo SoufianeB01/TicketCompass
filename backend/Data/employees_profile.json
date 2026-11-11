@@ -1,0 +1,20 @@
+[
+  {
+    "EmployeeId": 1,
+    "Summary": "Alex specializes in network infrastructure, VPN connectivity, firewall configuration, and DNS troubleshooting.",
+    "GeneratedAt": "2026-11-10T10:00:00Z",
+    "IsOutdated": false
+  },
+  {
+    "EmployeeId": 2,
+    "Summary": "Sarah specializes in backend development using C# and .NET, with experience in SQL databases and API troubleshooting.",
+    "GeneratedAt": "2026-11-10T10:00:00Z",
+    "IsOutdated": false
+  },
+  {
+    "EmployeeId": 3,
+    "Summary": "Daniel works with cloud infrastructure, Docker, Linux, and networking. He has successfully resolved a Docker database connectivity issue.",
+    "GeneratedAt": "2026-11-10T10:00:00Z",
+    "IsOutdated": false
+  }
+]

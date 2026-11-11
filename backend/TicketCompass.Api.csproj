@@ -10,4 +10,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="11.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Prompts/**/*.txt" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

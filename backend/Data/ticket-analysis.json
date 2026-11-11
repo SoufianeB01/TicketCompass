@@ -1,1 +1,34 @@
-[]
+[
+  {
+    "TicketId": 2,
+    "Category": "Backend Development",
+    "RequiredSkills": [
+      "C#",
+      ".NET",
+      "SQL",
+      "Database Troubleshooting"
+    ],
+    "Summary": "The internal order management API intermittently fails with HTTP 500 errors caused by database connection timeouts."
+  },
+  {
+    "TicketId": 3,
+    "Category": "Containerization",
+    "RequiredSkills": [
+      "Docker",
+      "Networking",
+      "Database Connectivity"
+    ],
+    "Summary": "A Dockerized backend service could not reach PostgreSQL because of an incorrect database hostname."
+  },
+  {
+    "TicketId": 1,
+    "Category": "Remote Access",
+    "RequiredSkills": [
+      "VPN Troubleshooting",
+      "Windows Update Troubleshooting",
+      "Network Authentication",
+      "Windows Operating System Administration"
+    ],
+    "Summary": "Multiple employees are experiencing authentication timeout errors when connecting to the corporate VPN after a recent Windows update."
+  }
+]
