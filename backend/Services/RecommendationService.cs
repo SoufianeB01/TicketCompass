@@ -1,3 +1,4 @@
+using System.Text.Json;
 using TicketCompass.Api.Interfaces;
 using TicketCompass.Api.Models;
 using TicketCompass.Api.Models.Enums;
@@ -9,6 +10,8 @@ public class RecommendationService : IRecommendationService
     private readonly ITicketService _ticketService;
     private readonly IEmployeeService _employeeService;
     private readonly IAiAnalysisService _analysisService;
+    private readonly ILlmService _llmService;
+    private readonly string _promptPath;
 
     private const double SkillWeight = 0.50;
     private const double ExperienceWeight = 0.30;
@@ -17,11 +20,20 @@ public class RecommendationService : IRecommendationService
     public RecommendationService(
         ITicketService ticketService,
         IEmployeeService employeeService,
-        IAiAnalysisService analysisService)
+        IAiAnalysisService analysisService,
+        ILlmService llmService,
+        IWebHostEnvironment environment)
     {
         _ticketService = ticketService;
         _employeeService = employeeService;
         _analysisService = analysisService;
+        _llmService = llmService;
+
+        _promptPath = Path.Combine(
+            environment.ContentRootPath,
+            "Prompts",
+            "Recommendation.txt"
+        );
     }
 
     public async Task<List<Recommendation>> GetRecommendationsAsync(int ticketId)
@@ -34,11 +46,15 @@ public class RecommendationService : IRecommendationService
         var analysis = await _analysisService.GetByTicketIdAsync(ticketId);
 
         if (analysis == null)
-            throw new InvalidOperationException("Analyze the ticket before requesting recommendations.");
+            throw new InvalidOperationException(
+                "Analyze the ticket before requesting recommendations."
+            );
 
         var employees = await _employeeService.GetAllAsync();
         var tickets = await _ticketService.GetAllAsync();
-        var recommendations = new List<Recommendation>();
+
+        // Prepare eligible employees and their historical tickets.
+        var eligibleEmployees = new List<object>();
 
         foreach (var employee in employees)
         {
@@ -46,37 +62,126 @@ public class RecommendationService : IRecommendationService
                 t.AssignedEmployeeId == employee.Id &&
                 t.Status != TicketStatus.Resolved);
 
-            if (employee.MaxCapacity <= 0 || activeTickets >= employee.MaxCapacity)
+            if (employee.MaxCapacity <= 0 ||
+                activeTickets >= employee.MaxCapacity)
                 continue;
 
-            var skillScore = CalculateSkillMatch(
-                analysis.RequiredSkills, employee.Skills);
+            var resolvedTickets = tickets
+                .Where(t =>
+                    t.AssignedEmployeeId == employee.Id &&
+                    t.Status == TicketStatus.Resolved)
+                .Select(t => new
+                {
+                    t.Title,
+                    t.Description,
+                    t.RequiredSkills,
+                    t.Resolution
+                })
+                .ToList();
 
-            var resolvedTickets = tickets.Where(t =>
+            eligibleEmployees.Add(new
+            {
+                employee.Id,
+                employee.Name,
+                employee.Skills,
+                ResolvedTickets = resolvedTickets
+            });
+        }
+
+        if (eligibleEmployees.Count == 0)
+            return [];
+
+        // Prepare the data for Gemini.
+        var promptData = new
+        {
+            Ticket = new
+            {
+                ticket.Title,
+                ticket.Description,
+                analysis.Category,
+                analysis.RequiredSkills,
+                analysis.Summary
+            },
+            Employees = eligibleEmployees
+        };
+
+        var jsonData = JsonSerializer.Serialize(promptData);
+
+        var promptTemplate = await File.ReadAllTextAsync(_promptPath);
+        var prompt = promptTemplate.Replace("{{DATA}}", jsonData);
+
+        // Ask Gemini to evaluate skills and experience.
+        var response = await _llmService.GenerateAsync(prompt);
+
+        var cleanedResponse = response.Trim();
+
+        if (cleanedResponse.StartsWith("```"))
+        {
+            cleanedResponse = cleanedResponse
+                .Replace("```json", "")
+                .Replace("```", "")
+                .Trim();
+        }
+
+        using var document = JsonDocument.Parse(cleanedResponse);
+
+        var aiEmployees = document.RootElement
+            .GetProperty("employees")
+            .EnumerateArray();
+
+        var recommendations = new List<Recommendation>();
+
+        foreach (var aiEmployee in aiEmployees)
+        {
+            var employeeId = aiEmployee.GetProperty("employeeId").GetInt32();
+
+            var employee = employees.FirstOrDefault(e => e.Id == employeeId);
+
+            if (employee == null)
+                continue;
+
+            var activeTickets = tickets.Count(t =>
                 t.AssignedEmployeeId == employee.Id &&
-                t.Status == TicketStatus.Resolved).ToList();
+                t.Status != TicketStatus.Resolved);
 
-            var experienceScore = CalculateExperience(
-                analysis.RequiredSkills, resolvedTickets);
+            // Only include employees who have available capacity.
+            if (employee.MaxCapacity <= 0 ||
+                activeTickets >= employee.MaxCapacity)
+                continue;
 
-            var capacityScore = (double)(employee.MaxCapacity - activeTickets)
-                / employee.MaxCapacity;
+            var skillScore = Math.Clamp(
+                aiEmployee.GetProperty("skillScore").GetDouble(), 0, 100
+            ) / 100.0;
 
-            var score = (SkillWeight * skillScore)
-                      + (ExperienceWeight * experienceScore)
-                      + (CapacityWeight * capacityScore);
+            var experienceScore = Math.Clamp(
+                aiEmployee.GetProperty("experienceScore").GetDouble(), 0, 100
+            ) / 100.0;
+
+            var explanation = aiEmployee
+                .GetProperty("explanation")
+                .GetString() ?? string.Empty;
+
+            var availableCapacity = employee.MaxCapacity - activeTickets;
+
+            var capacityScore = (double)availableCapacity /
+                employee.MaxCapacity;
+
+            // Final score is calculated in C#, not by Gemini.
+            var score =
+                (SkillWeight * skillScore) +
+                (ExperienceWeight * experienceScore) +
+                (CapacityWeight * capacityScore);
 
             recommendations.Add(new Recommendation
             {
                 TicketId = ticketId,
                 EmployeeId = employee.Id,
                 Score = Math.Round(score * 100, 1),
-                Reasons =
-                [
-                    $"Skill match: {skillScore:P0}",
-                    $"Relevant experience: {experienceScore:P0}",
-                    $"Available capacity: {employee.MaxCapacity - activeTickets}/{employee.MaxCapacity}"
-                ]
+                SkillScore = Math.Round(skillScore * 100, 1),
+                ExperienceScore = Math.Round(experienceScore * 100, 1),
+                AvailableCapacity = availableCapacity,
+                MaxCapacity = employee.MaxCapacity,
+                Explanation = explanation
             });
         }
 
@@ -84,44 +189,5 @@ public class RecommendationService : IRecommendationService
             .OrderByDescending(r => r.Score)
             .Take(3)
             .ToList();
-    }
-
-    private static double CalculateSkillMatch(
-        List<string> requiredSkills,
-        List<string> employeeSkills)
-    {
-        if (requiredSkills.Count == 0)
-            return 0;
-
-        var matches = requiredSkills.Count(required =>
-            employeeSkills.Any(skill => SkillsMatch(required, skill)));
-
-        return (double)matches / requiredSkills.Count;
-    }
-
-    private static double CalculateExperience(
-        List<string> requiredSkills,
-        List<Ticket> resolvedTickets)
-    {
-        if (resolvedTickets.Count == 0)
-            return 0;
-
-        var relevantTickets = resolvedTickets.Count(ticket =>
-            ticket.RequiredSkills != null &&
-            ticket.RequiredSkills.Any(required =>
-                requiredSkills.Any(skill => SkillsMatch(skill, required))));
-
-        return Math.Min(1.0, relevantTickets / 3.0);
-    }
-
-    private static bool SkillsMatch(string first, string second)
-    {
-        if (string.IsNullOrWhiteSpace(first) ||
-            string.IsNullOrWhiteSpace(second))
-            return false;
-
-        return first.Equals(second, StringComparison.OrdinalIgnoreCase)
-            || first.Contains(second, StringComparison.OrdinalIgnoreCase)
-            || second.Contains(first, StringComparison.OrdinalIgnoreCase);
     }
 }

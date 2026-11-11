@@ -2,44 +2,292 @@
   {
     "Id": 1,
     "Title": "VPN connection fails after Windows update",
-    "Description": "Several employees cannot connect to the company VPN after installing the latest Windows update. The VPN client displays an authentication timeout error.",
-    "RequiredSkills": [],
+    "Description": "Several employees cannot connect to the corporate VPN after a Windows update; the client reports authentication timeouts.",
+    "RequiredSkills": [
+      "VPN",
+      "Networking",
+      "Windows"
+    ],
     "Priority": "High",
     "Status": "Resolved",
-    "CreatedAt": "2026-11-09T09:00:00Z",
+    "CreatedAt": "2026-10-14T09:00:00Z",
     "AssignedEmployeeId": 1,
-    "Resolution": "XXX",
-    "ResolvedAt": "2026-11-11T11:29:30.9099969Z"
+    "Resolution": "Updated the VPN client profile, repaired the authentication configuration and verified connectivity on affected devices.",
+    "ResolvedAt": "2026-10-14T15:30:00Z"
   },
   {
     "Id": 2,
-    "Title": "Internal API returns HTTP 500",
-    "Description": "The internal order management API intermittently returns HTTP 500 when retrieving order details. Application logs show database connection timeout errors.",
+    "Title": "Internal .NET API returns HTTP 500",
+    "Description": "The order management ASP.NET Core API intermittently returns HTTP 500; logs show SQL connection pool exhaustion.",
     "RequiredSkills": [
       "C#",
       ".NET",
       "SQL"
     ],
     "Priority": "Critical",
-    "Status": "InProgress",
-    "CreatedAt": "2026-11-08T10:30:00Z",
+    "Status": "Resolved",
+    "CreatedAt": "2026-10-16T10:30:00Z",
     "AssignedEmployeeId": 2,
-    "Resolution": null,
-    "ResolvedAt": null
+    "Resolution": "Fixed undisposed database connections, adjusted connection pooling and added integration tests for concurrent requests.",
+    "ResolvedAt": "2026-10-17T12:10:00Z"
   },
   {
     "Id": 3,
-    "Title": "Docker container cannot connect to database",
-    "Description": "A backend service running in Docker could not connect to its PostgreSQL database because the container was using an incorrect hostname.",
+    "Title": "Docker container cannot connect to PostgreSQL",
+    "Description": "A Dockerized backend service fails to reach PostgreSQL because the database hostname is incorrect.",
     "RequiredSkills": [
       "Docker",
       "Networking"
     ],
     "Priority": "Medium",
     "Status": "Resolved",
-    "CreatedAt": "2026-11-05T08:00:00Z",
+    "CreatedAt": "2026-10-18T08:00:00Z",
     "AssignedEmployeeId": 3,
-    "Resolution": "Updated the database hostname in the Docker Compose configuration and verified connectivity.",
-    "ResolvedAt": "2026-11-05T11:45:00Z"
+    "Resolution": "Changed the database host to the Docker Compose service name and verified connectivity across containers.",
+    "ResolvedAt": "2026-10-18T11:45:00Z"
+  },
+  {
+    "Id": 4,
+    "Title": "React dashboard shows a blank screen",
+    "Description": "After a frontend deployment, the React dashboard renders a blank page and the console reports a failed module import.",
+    "RequiredSkills": [],
+    "Priority": "High",
+    "Status": "Open",
+    "CreatedAt": "2026-11-10T08:20:00Z",
+    "AssignedEmployeeId": null,
+    "Resolution": null,
+    "ResolvedAt": null
+  },
+  {
+    "Id": 5,
+    "Title": "GitHub Actions pipeline fails during .NET build",
+    "Description": "The CI workflow fails because dotnet build runs from the repository root instead of the backend project directory.",
+    "RequiredSkills": [
+      "GitHub Actions",
+      "CI/CD",
+      ".NET"
+    ],
+    "Priority": "Medium",
+    "Status": "Resolved",
+    "CreatedAt": "2026-10-20T13:10:00Z",
+    "AssignedEmployeeId": 3,
+    "Resolution": "Set the correct working directory in GitHub Actions and added restore, build and test steps.",
+    "ResolvedAt": "2026-10-20T15:40:00Z"
+  },
+  {
+    "Id": 6,
+    "Title": "JWT authentication tokens expire unexpectedly",
+    "Description": "Users are signed out too quickly because ASP.NET Core middleware rejects valid refresh tokens.",
+    "RequiredSkills": [
+      "C#",
+      "ASP.NET Core",
+      "Middleware",
+      "JWT"
+    ],
+    "Priority": "High",
+    "Status": "Resolved",
+    "CreatedAt": "2026-10-22T09:45:00Z",
+    "AssignedEmployeeId": 2,
+    "Resolution": "Corrected refresh-token validation and middleware ordering; added tests for token renewal and expiration.",
+    "ResolvedAt": "2026-10-23T14:15:00Z"
+  },
+  {
+    "Id": 7,
+    "Title": "PostgreSQL reports slow queries during peak hours",
+    "Description": "Reporting queries take over 20 seconds and execution plans show sequential scans on large order tables.",
+    "RequiredSkills": [],
+    "Priority": "High",
+    "Status": "Open",
+    "CreatedAt": "2026-11-10T11:05:00Z",
+    "AssignedEmployeeId": null,
+    "Resolution": null,
+    "ResolvedAt": null
+  },
+  {
+    "Id": 8,
+    "Title": "AWS application cannot reach PostgreSQL",
+    "Description": "A service running in AWS cannot connect to the database after a security group change.",
+    "RequiredSkills": [],
+    "Priority": "Critical",
+    "Status": "Open",
+    "CreatedAt": "2026-11-11T07:50:00Z",
+    "AssignedEmployeeId": null,
+    "Resolution": null,
+    "ResolvedAt": null
+  },
+  {
+    "Id": 9,
+    "Title": "React form submits incomplete JSON payload",
+    "Description": "A React and TypeScript ticket form intermittently omits the description property from API requests.",
+    "RequiredSkills": [
+      "React",
+      "TypeScript",
+      "REST API"
+    ],
+    "Priority": "Low",
+    "Status": "Resolved",
+    "CreatedAt": "2026-10-25T14:15:00Z",
+    "AssignedEmployeeId": 4,
+    "Resolution": "Fixed stale React state handling, added client-side validation and covered the request payload with component tests.",
+    "ResolvedAt": "2026-10-26T10:00:00Z"
+  },
+  {
+    "Id": 10,
+    "Title": "Docker Compose frontend cannot reach backend API",
+    "Description": "The frontend container uses the wrong backend hostname in its proxy configuration.",
+    "RequiredSkills": [],
+    "Priority": "Medium",
+    "Status": "Open",
+    "CreatedAt": "2026-11-11T09:25:00Z",
+    "AssignedEmployeeId": null,
+    "Resolution": null,
+    "ResolvedAt": null
+  },
+  {
+    "Id": 11,
+    "Title": "AWS deployment fails to read environment secrets",
+    "Description": "A Python service deployed on AWS cannot read required environment secrets because its IAM role lacks permissions.",
+    "RequiredSkills": [
+      "AWS",
+      "Python",
+      "Cloud"
+    ],
+    "Priority": "High",
+    "Status": "Resolved",
+    "CreatedAt": "2026-10-27T08:40:00Z",
+    "AssignedEmployeeId": 5,
+    "Resolution": "Granted least-privilege IAM access to the required secrets and validated startup in the deployment environment.",
+    "ResolvedAt": "2026-10-27T16:20:00Z"
+  },
+  {
+    "Id": 12,
+    "Title": "LiteLLM proxy returns provider configuration error",
+    "Description": "Requests through LiteLLM fail because the configured model alias does not match the provider route.",
+    "RequiredSkills": [
+      "LiteLLM",
+      "Python",
+      "API Integration"
+    ],
+    "Priority": "Medium",
+    "Status": "Resolved",
+    "CreatedAt": "2026-10-29T10:10:00Z",
+    "AssignedEmployeeId": 5,
+    "Resolution": "Corrected the LiteLLM model alias and provider settings; verified successful completion requests.",
+    "ResolvedAt": "2026-10-29T13:25:00Z"
+  },
+  {
+    "Id": 13,
+    "Title": "Kubernetes deployment enters CrashLoopBackOff",
+    "Description": "A Kubernetes deployment repeatedly restarts after a configuration update; the readiness probe fails.",
+    "RequiredSkills": [
+      "Kubernetes",
+      "Docker",
+      "Linux"
+    ],
+    "Priority": "Critical",
+    "Status": "Resolved",
+    "CreatedAt": "2026-10-30T07:55:00Z",
+    "AssignedEmployeeId": 3,
+    "Resolution": "Fixed the container startup configuration and readiness probe path, then verified stable rollout.",
+    "ResolvedAt": "2026-10-30T12:30:00Z"
+  },
+  {
+    "Id": 14,
+    "Title": "Encrypted files cannot be decrypted after key rotation",
+    "Description": "A Python worker cannot decrypt archived files because the key identifier is not preserved in the encrypted payload metadata.",
+    "RequiredSkills": [
+      "Python",
+      "Encryption",
+      "Security"
+    ],
+    "Priority": "High",
+    "Status": "Resolved",
+    "CreatedAt": "2026-11-01T09:00:00Z",
+    "AssignedEmployeeId": 6,
+    "Resolution": "Stored key identifiers with encrypted payload metadata and added backward-compatible decryption tests.",
+    "ResolvedAt": "2026-11-02T14:00:00Z"
+  },
+  {
+    "Id": 15,
+    "Title": "React table loses filters after navigation",
+    "Description": "The React dashboard loses selected filters when users open a ticket and return to the list.",
+    "RequiredSkills": [
+      "React",
+      "TypeScript",
+      "MUI"
+    ],
+    "Priority": "Low",
+    "Status": "Resolved",
+    "CreatedAt": "2026-11-03T11:20:00Z",
+    "AssignedEmployeeId": 4,
+    "Resolution": "Persisted filter state in URL search parameters and added navigation regression tests.",
+    "ResolvedAt": "2026-11-03T15:15:00Z"
+  },
+  {
+    "Id": 16,
+    "Title": "Python data processing job crashes on malformed input",
+    "Description": "A scheduled Python ETL task fails when input rows contain missing timestamps or invalid values.",
+    "RequiredSkills": [
+      "Python",
+      "Data Validation"
+    ],
+    "Priority": "Medium",
+    "Status": "Resolved",
+    "CreatedAt": "2026-11-04T08:30:00Z",
+    "AssignedEmployeeId": 6,
+    "Resolution": "Added input schema validation, quarantined invalid rows and recorded structured error logs.",
+    "ResolvedAt": "2026-11-04T13:40:00Z"
+  },
+  {
+    "Id": 17,
+    "Title": "New .NET middleware causes CORS failures",
+    "Description": "A recently introduced ASP.NET Core middleware component blocks browser requests to the API due to incorrect ordering.",
+    "RequiredSkills": [],
+    "Priority": "High",
+    "Status": "Open",
+    "CreatedAt": "2026-11-11T08:30:00Z",
+    "AssignedEmployeeId": null,
+    "Resolution": null,
+    "ResolvedAt": null
+  },
+  {
+    "Id": 18,
+    "Title": "GitHub Actions deployment workflow fails to publish image",
+    "Description": "The CI/CD workflow builds successfully but fails when pushing a Docker image to the container registry.",
+    "RequiredSkills": [],
+    "Priority": "High",
+    "Status": "Open",
+    "CreatedAt": "2026-11-11T09:10:00Z",
+    "AssignedEmployeeId": null,
+    "Resolution": null,
+    "ResolvedAt": null
+  },
+  {
+    "Id": 19,
+    "Title": "LiteLLM requests fail intermittently under load",
+    "Description": "The Python AI gateway returns intermittent upstream errors when many LiteLLM requests are sent concurrently.",
+    "RequiredSkills": [
+      "LiteLLM",
+      "Python",
+      "API Integration"
+    ],
+    "Priority": "High",
+    "Status": "InProgress",
+    "CreatedAt": "2026-11-10T14:30:00Z",
+    "AssignedEmployeeId": 5,
+    "Resolution": null,
+    "ResolvedAt": null
+  },
+  {
+    "Id": 20,
+    "Title": "Kubernetes service cannot access encrypted secrets",
+    "Description": "A Kubernetes workload fails to read encrypted application secrets after a namespace configuration change.",
+    "RequiredSkills": [],
+    "Priority": "Critical",
+    "Status": "InProgress",
+    "CreatedAt": "2026-11-11T10:00:00Z",
+    "AssignedEmployeeId": 2,
+    "Resolution": null,
+    "ResolvedAt": null
   }
 ]
