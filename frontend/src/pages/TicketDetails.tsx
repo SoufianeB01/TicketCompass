@@ -109,35 +109,44 @@ function TicketDetails() {
 
   const [expandedEmployee, setExpandedEmployee] = useState<number | null>(null);
 
-  useEffect(() => {
+  
+    useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError('');
-    setAnalysis(null);
-    setRecommendations([]);
-    setRecommendationsRequested(false);
-    setRecommendationError('');
-    setExpandedEmployee(null);
 
     Promise.all([getTicketById(ticketId), getEmployees()])
-      .then(([ticketData, employeeData]) => {
+        .then(([ticketData, employeeData]) => {
         if (!active) return;
+
         setTicket(ticketData);
         setEmployees(employeeData);
         setSelectedEmployeeId(ticketData.assignedEmployeeId ?? '');
         setLoading(false);
+        setError('');
+        setAnalysis(null);
+        setRecommendations([]);
+        setRecommendationsRequested(false);
+        setRecommendationError('');
+        setExpandedEmployee(null);
+
         return getTicketAnalysis(ticketId)
-          .then(data => { if (active) setAnalysis(data); })
-          .catch(() => { if (active) setAnalysis(null); });
-      })
-      .catch(() => {
+            .then(data => {
+            if (active) setAnalysis(data);
+            })
+            .catch(() => {
+            if (active) setAnalysis(null);
+            });
+        })
+        .catch(() => {
         if (!active) return;
         setError('Failed to load ticket.');
         setLoading(false);
-      });
+        });
 
-    return () => { active = false; };
-  }, [ticketId]);
+    return () => {
+        active = false;
+    };
+    }, [ticketId]);
+
 
   function startEditing() {
     if (!ticket) return;
