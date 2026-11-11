@@ -98,3 +98,7 @@ export const getEmployees = () =>
 
 export const getEmployeeById = (id: number) =>
   request<Employee>(`/employees/${id}`);
+
+// Configuration
+export const getActiveModel = () =>
+  request<{ model: string }>('/config/model');

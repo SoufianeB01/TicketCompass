@@ -10,6 +10,7 @@ import {
   Divider,
   LinearProgress,
   TextField,
+  MenuItem,
   Typography,
   Collapse,
   IconButton,
@@ -36,6 +37,7 @@ import {
   updateTicket,
   resolveTicket,
 } from '../services/api';
+
 import type {
   Ticket,
   Employee,
@@ -69,6 +71,7 @@ function formatStatus(status: string) {
 }
 
 function formatDate(date: string) {
+  if (Number.isNaN(new Date(date).getTime())) return '—';
   return new Date(date).toLocaleString('en-GB', {
     day: 'numeric',
     month: 'short',
@@ -90,6 +93,11 @@ function TicketDetails() {
 
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [recommending, setRecommending] = useState(false);
+  const [recommendationsRequested, setRecommendationsRequested] = useState(false);
+  const [recommendationError, setRecommendationError] = useState('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | ''>('');
   const [error, setError] = useState('');
 
   const [editing, setEditing] = useState(false);
@@ -102,28 +110,33 @@ function TicketDetails() {
   const [expandedEmployee, setExpandedEmployee] = useState<number | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      getTicketById(ticketId),
-      getEmployees(),
-      getTicketAnalysis(ticketId).catch(() => null),
-    ]).then(([ticketData, employeeData, analysisData]) => {
-      setTicket(ticketData);
-      setEmployees(employeeData);
-      setAnalysis(analysisData);
-      setLoading(false);
+    let active = true;
+    setLoading(true);
+    setError('');
+    setAnalysis(null);
+    setRecommendations([]);
+    setRecommendationsRequested(false);
+    setRecommendationError('');
+    setExpandedEmployee(null);
 
-      if (analysisData) {
-        getRecommendations(ticketId).then(data => {
-          setRecommendations(data);
-          if (data.length > 0) {
-            setExpandedEmployee(data[0].employeeId);
-          }
-        });
-      }
-    }).catch(() => {
-      setError('Failed to load ticket.');
-      setLoading(false);
-    });
+    Promise.all([getTicketById(ticketId), getEmployees()])
+      .then(([ticketData, employeeData]) => {
+        if (!active) return;
+        setTicket(ticketData);
+        setEmployees(employeeData);
+        setSelectedEmployeeId(ticketData.assignedEmployeeId ?? '');
+        setLoading(false);
+        return getTicketAnalysis(ticketId)
+          .then(data => { if (active) setAnalysis(data); })
+          .catch(() => { if (active) setAnalysis(null); });
+      })
+      .catch(() => {
+        if (!active) return;
+        setError('Failed to load ticket.');
+        setLoading(false);
+      });
+
+    return () => { active = false; };
   }, [ticketId]);
 
   function startEditing() {
@@ -134,86 +147,116 @@ function TicketDetails() {
     setPriority(ticket.priority);
     setStatus(ticket.status);
     setResolution(ticket.resolution ?? '');
+    setSelectedEmployeeId(ticket.assignedEmployeeId ?? '');
     setEditing(true);
   }
 
   function cancelEditing() {
+    setSelectedEmployeeId(ticket?.assignedEmployeeId ?? '');
     setEditing(false);
     setError('');
   }
 
-  async function saveChanges() {
-    if (!ticket || !title.trim() || !description.trim()) return;
-
-    // Resolving a ticket uses the dedicated backend endpoint.
-    if (status === 'Resolved' && ticket.status !== 'Resolved') {
-      if (!ticket.assignedEmployeeId) {
-        setError('Assign an employee before resolving the ticket.');
-        return;
-      }
-
-      if (!resolution.trim()) {
-        setError('Enter a resolution before marking the ticket as resolved.');
-        return;
-      }
-    }
+  function saveChanges() {
+    if (!ticket || working || analyzing || recommending || !title.trim() || !description.trim()) return;
 
     setWorking(true);
     setError('');
 
     const contentChanged =
-      title.trim() !== ticket.title ||
-      description.trim() !== ticket.description;
+      title.trim() !== ticket.title || description.trim() !== ticket.description;
 
-    const updated = await updateTicket(ticketId, {
+    // Status is editable, including moving a resolved ticket back to Open.
+    // Resolution is handled by the dedicated endpoint when one is provided.
+    const newStatus = status === 'Resolved' && ticket.status !== 'Resolved'
+      ? ticket.status : status;
+
+    if (status === 'Resolved' && ticket.status !== 'Resolved' && !resolution.trim()) {
+      setError('Enter a resolution before marking the ticket as resolved.');
+      setWorking(false);
+      return;
+    }
+
+    updateTicket(ticketId, {
       ...ticket,
       title: title.trim(),
       description: description.trim(),
       priority,
-      status: status === 'Resolved' ? ticket.status : status,
-    });
+      status: newStatus,
+    })
+      .then(async updated => {
+        setTicket(updated);
+        if (contentChanged) {
+          setAnalysis(null);
+          setRecommendations([]);
+          setRecommendationsRequested(false);
+        }
 
-    setTicket(updated);
+        // Use the existing assignment endpoint when Save changes the assignee.
+        // Assign before resolving, because resolved tickets cannot be assigned.
+        if (selectedEmployeeId !== '' &&
+            selectedEmployeeId !== updated.assignedEmployeeId) {
+          updated = await assignTicket(ticketId, selectedEmployeeId);
+          setTicket(updated);
+        }
 
-    if (contentChanged) {
-      setAnalysis(null);
-      setRecommendations([]);
-    }
-
-    if (status === 'Resolved' && ticket.status !== 'Resolved') {
-      const resolved = await resolveTicket(ticketId, resolution.trim());
-      setTicket(resolved);
-    }
-
-    setEditing(false);
-    setWorking(false);
+        if (status === 'Resolved' && ticket.status !== 'Resolved') {
+          updated = await resolveTicket(ticketId, resolution.trim());
+          setTicket(updated);
+        }
+        setSelectedEmployeeId(updated.assignedEmployeeId ?? '');
+      })
+      .then(() => setEditing(false))
+      .catch(() => setError('Could not save changes. Please try again.'))
+      .finally(() => setWorking(false));
   }
 
-  async function handleAnalyze() {
+  function handleAnalyze() {
+    if (working || analyzing || recommending) return;
+    setAnalyzing(true);
+    setError('');
+    setAnalysis(null);
+    setRecommendations([]);
+    setRecommendationsRequested(false);
+    setRecommendationError('');
+    setExpandedEmployee(null);
+
+    analyzeTicket(ticketId)
+      .then(result => setAnalysis(result))
+      .catch(() => setError('AI analysis failed. Please try again.'))
+      .finally(() => setAnalyzing(false));
+  }
+
+  function handleRecommend() {
+    if (!analysis || working || analyzing || recommending) return;
+    setRecommending(true);
+    setRecommendationsRequested(true);
+    setRecommendationError('');
+    setRecommendations([]);
+    setExpandedEmployee(null);
+
+    getRecommendations(ticketId)
+      .then(data => {
+        setRecommendations(data);
+        if (data.length) setExpandedEmployee(data[0].employeeId);
+      })
+      .catch(() => setRecommendationError('Could not generate recommendations. Please try again.'))
+      .finally(() => setRecommending(false));
+  }
+
+  function handleAssign(employeeId: number) {
+    if (working || analyzing || recommending || ticket?.assignedEmployeeId === employeeId) return;
     setWorking(true);
     setError('');
 
-    const result = await analyzeTicket(ticketId);
-    setAnalysis(result);
-
-    const data = await getRecommendations(ticketId);
-    setRecommendations(data);
-
-    if (data.length > 0) {
-      setExpandedEmployee(data[0].employeeId);
-    }
-
-    setWorking(false);
-  }
-
-  async function handleAssign(employeeId: number) {
-    setWorking(true);
-    setError('');
-
-    const updated = await assignTicket(ticketId, employeeId);
-    setTicket(updated);
-
-    setWorking(false);
+    assignTicket(ticketId, employeeId)
+      .then(updated => {
+        setTicket(updated);
+        setSelectedEmployeeId(updated.assignedEmployeeId ?? '');
+        // Keep the generated recommendations visible after assigning.
+      })
+      .catch(() => setError('Could not assign employee. Check their capacity and try again.'))
+      .finally(() => setWorking(false));
   }
 
   if (loading) return <CircularProgress />;
@@ -221,7 +264,10 @@ function TicketDetails() {
   if (!ticket) {
     return (
       <Box>
-        <Button startIcon={<ArrowBackOutlined />} onClick={() => navigate('/tickets')}>
+        <Button
+          startIcon={<ArrowBackOutlined />}
+          onClick={() => navigate('/tickets')}
+        >
           Back to Tickets
         </Button>
         <Alert severity="error">{error || 'Ticket not found.'}</Alert>
@@ -247,15 +293,21 @@ function TicketDetails() {
       <Typography variant="h4" sx={{ fontWeight: 700 }}>
         {ticket.title}
       </Typography>
+
       <Typography color="text.secondary" sx={{ mb: 3 }}>
         Ticket #{ticket.id}
       </Typography>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       <div className="ticket-details-grid">
         <div className="ticket-details-column">
 
+          {/* Ticket Information */}
           <Card variant="outlined">
             <CardContent>
               <Box className="ticket-card-header">
@@ -268,7 +320,7 @@ function TicketDetails() {
                     size="small"
                     startIcon={<EditOutlined />}
                     onClick={startEditing}
-                    disabled={ticket.status === 'Resolved'}
+                    disabled={working || analyzing || recommending}
                   >
                     Edit
                   </Button>
@@ -277,6 +329,7 @@ function TicketDetails() {
 
               <div className="ticket-info-row">
                 <Typography sx={{ fontWeight: 500 }}>Status</Typography>
+
                 <Box className="ticket-options">
                   {statuses.map(item => (
                     <Chip
@@ -287,9 +340,8 @@ function TicketDetails() {
                       sx={{
                         ...getStatusColor(item),
                         opacity: editing || ticket.status === item ? 1 : 0.45,
-                        border: status === item && editing
-                          ? '2px solid currentColor'
-                          : ticket.status === item && !editing
+                        border:
+                          (editing ? status : ticket.status) === item
                             ? '2px solid currentColor'
                             : '2px solid transparent',
                       }}
@@ -300,6 +352,7 @@ function TicketDetails() {
 
               <div className="ticket-info-row">
                 <Typography sx={{ fontWeight: 500 }}>Priority</Typography>
+
                 <Box className="ticket-options">
                   {priorities.map(item => (
                     <Chip
@@ -310,9 +363,10 @@ function TicketDetails() {
                       sx={{
                         ...getPriorityColor(item),
                         opacity: editing || ticket.priority === item ? 1 : 0.45,
-                        border: (editing ? priority : ticket.priority) === item
-                          ? '2px solid currentColor'
-                          : '2px solid transparent',
+                        border:
+                          (editing ? priority : ticket.priority) === item
+                            ? '2px solid currentColor'
+                            : '2px solid transparent',
                       }}
                     />
                   ))}
@@ -321,6 +375,7 @@ function TicketDetails() {
 
               <div className="ticket-info-row">
                 <Typography sx={{ fontWeight: 500 }}>Title</Typography>
+
                 {editing ? (
                   <TextField
                     size="small"
@@ -335,6 +390,7 @@ function TicketDetails() {
 
               <div className="ticket-info-row">
                 <Typography sx={{ fontWeight: 500 }}>Description</Typography>
+
                 {editing ? (
                   <TextField
                     size="small"
@@ -348,6 +404,33 @@ function TicketDetails() {
                   <Typography sx={{ whiteSpace: 'pre-wrap' }}>
                     {ticket.description}
                   </Typography>
+                )}
+              </div>
+
+              <div className="ticket-info-row">
+                <Typography sx={{ fontWeight: 500 }}>Assigned Employee</Typography>
+                {editing ? (
+                  <TextField
+                    select
+                    size="small"
+                    fullWidth
+                    value={selectedEmployeeId}
+                    onChange={event => setSelectedEmployeeId(
+                      event.target.value === '' ? '' : Number(event.target.value)
+                    )}
+                    disabled={working || analyzing || recommending || ticket.status === 'Resolved'}
+                  >
+                    <MenuItem value="" disabled={ticket.assignedEmployeeId != null}>
+                      Not assigned
+                    </MenuItem>
+                    {employees.map(employee => (
+                      <MenuItem key={employee.id} value={employee.id}>
+                        {employee.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                ) : (
+                  <Typography>{assignee?.name ?? 'Not assigned'}</Typography>
                 )}
               </div>
 
@@ -375,7 +458,7 @@ function TicketDetails() {
 
               <Divider sx={{ my: 2 }} />
 
-              <Box sx={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CalendarTodayOutlined fontSize="small" color="action" />
                   <Box>
@@ -394,7 +477,7 @@ function TicketDetails() {
                     <Button
                       variant="contained"
                       onClick={saveChanges}
-                      disabled={working}
+                      disabled={working || analyzing || recommending}
                       sx={{ bgcolor: '#4f46e5' }}
                     >
                       Save
@@ -405,12 +488,17 @@ function TicketDetails() {
             </CardContent>
           </Card>
 
+          {/* AI Ticket Analysis */}
           <Card variant="outlined">
             <CardContent>
               <Box className="ticket-card-header">
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   <AutoAwesomeOutlined
-                    sx={{ color: '#4f46e5', verticalAlign: 'middle', mr: 1 }}
+                    sx={{
+                      color: '#4f46e5',
+                      verticalAlign: 'middle',
+                      mr: 1,
+                    }}
                   />
                   AI Ticket Analysis
                 </Typography>
@@ -419,18 +507,28 @@ function TicketDetails() {
                   variant="contained"
                   startIcon={<AutoAwesomeOutlined />}
                   onClick={handleAnalyze}
-                  disabled={working || ticket.status === 'Resolved'}
+                  disabled={working || analyzing || recommending}
                   sx={{ bgcolor: '#4f46e5' }}
                 >
-                  {analysis ? 'Analyze Again' : 'Analyze'}
+                  {analyzing ? 'Analyzing...' : analysis ? 'Analyze Again' : 'Analyze'}
                 </Button>
               </Box>
+
+              {analyzing && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                  <CircularProgress size={20} />
+                  <Typography variant="body2" color="text.secondary">
+                    AI is analyzing the ticket. This may take a moment...
+                  </Typography>
+                </Box>
+              )}
 
               {analysis ? (
                 <>
                   <Typography sx={{ fontWeight: 600, mt: 2 }}>
                     Summary
                   </Typography>
+
                   <Typography variant="body2" sx={{ mb: 2 }}>
                     {analysis.summary}
                   </Typography>
@@ -438,6 +536,7 @@ function TicketDetails() {
                   <Typography sx={{ fontWeight: 600 }}>
                     Category
                   </Typography>
+
                   <Chip
                     label={analysis.category}
                     size="small"
@@ -448,6 +547,7 @@ function TicketDetails() {
                   <Typography sx={{ fontWeight: 600, mt: 1, mb: 1 }}>
                     Required Skills
                   </Typography>
+
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {analysis.requiredSkills.map(skill => (
                       <Chip
@@ -469,22 +569,19 @@ function TicketDetails() {
         </div>
 
         <div className="ticket-details-column">
+
+          {/* Assignment Details */}
           <Card variant="outlined">
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                 Ticket Details
               </Typography>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <PersonOutlined color="action" />
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Assigned Employee
-                  </Typography>
-                  <Typography sx={{ fontWeight: 600 }}>
-                    {assignee?.name ?? 'Not assigned'}
-                  </Typography>
-                </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Assigned Employee
+                </Typography>
+                <Typography>{assignee?.name ?? 'Not assigned'}</Typography>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -501,37 +598,75 @@ function TicketDetails() {
             </CardContent>
           </Card>
 
+          {/* Recommended Employees */}
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                <PeopleOutlined
-                  sx={{ color: '#4f46e5', verticalAlign: 'middle', mr: 1 }}
-                />
-                Recommended Employees
-              </Typography>
+              <Box className="ticket-card-header">
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  <PeopleOutlined sx={{ color: '#4f46e5', verticalAlign: 'middle', mr: 1 }} />
+                  Recommended Employees
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={recommending ? <CircularProgress size={17} color="inherit" /> : <AutoAwesomeOutlined />}
+                  disabled={!analysis || working || analyzing || recommending}
+                  onClick={handleRecommend}
+                  sx={{ bgcolor: '#4f46e5' }}
+                >
+                  {recommending ? 'Recommending...' : recommendationsRequested ? 'Recommend Again' : 'Recommend'}
+                </Button>
+              </Box>
+
+              {recommending && (
+                <Box sx={{ mb: 2 }}>
+                  <LinearProgress sx={{ mb: 1 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    AI is evaluating skills, experience and capacity...
+                  </Typography>
+                </Box>
+              )}
+
+              {recommendationError && <Alert severity="error" sx={{ mb: 2 }}>{recommendationError}</Alert>}
 
               {!analysis && (
                 <Typography color="text.secondary">
-                  Analyze the ticket to see recommendations.
+                  Analyze the ticket first to enable recommendations.
                 </Typography>
               )}
 
-              {analysis && recommendations.length === 0 && (
+              {analysis && !recommending && !recommendationsRequested && (
                 <Typography color="text.secondary">
-                  No available employees found.
+                  Click Recommend to find the best available employees.
                 </Typography>
               )}
+
+              {analysis && recommendationsRequested && !recommending &&
+                !recommendationError && recommendations.length === 0 && (
+                  <Typography color="text.secondary">
+                    No eligible employees found. You can still assign someone manually above.
+                  </Typography>
+                )}
 
               {recommendations.map((recommendation, index) => {
                 const employee = employees.find(
                   person => person.id === recommendation.employeeId
                 );
 
-                const expanded = expandedEmployee === recommendation.employeeId;
+                const expanded =
+                  expandedEmployee === recommendation.employeeId;
 
                 return (
-                  <Box className="recommendation-card" key={recommendation.employeeId}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box
+                    className="recommendation-card"
+                    key={recommendation.employeeId}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                      }}
+                    >
                       <PersonOutlined sx={{ color: '#64748b' }} />
 
                       <Box sx={{ flex: 1 }}>
@@ -540,7 +675,10 @@ function TicketDetails() {
                         </Typography>
 
                         {index === 0 && (
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                          >
                             Best match
                           </Typography>
                         )}
@@ -549,13 +687,20 @@ function TicketDetails() {
                       <Chip
                         label={`${recommendation.score.toFixed(0)}%`}
                         size="small"
-                        sx={{ bgcolor: '#dcfce7', color: '#15803d', fontWeight: 700 }}
+                        sx={{
+                          bgcolor: '#dcfce7',
+                          color: '#15803d',
+                          fontWeight: 700,
+                        }}
                       />
 
                       <Button
                         size="small"
                         variant="contained"
-                        disabled={working || ticket.status === 'Resolved'}
+                        disabled={
+                          working || analyzing || recommending ||
+                          ticket.assignedEmployeeId === recommendation.employeeId
+                        }
                         onClick={() => handleAssign(recommendation.employeeId)}
                         sx={{ bgcolor: '#4f46e5' }}
                       >
@@ -567,14 +712,23 @@ function TicketDetails() {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          setExpandedEmployee(expanded ? null : recommendation.employeeId)
+                          setExpandedEmployee(
+                            expanded ? null : recommendation.employeeId
+                          )
                         }
                       >
                         {expanded ? <ExpandLess /> : <ExpandMore />}
                       </IconButton>
                     </Box>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        mt: 1.5,
+                      }}
+                    >
                       <LinearProgress
                         variant="determinate"
                         value={recommendation.score}
@@ -588,25 +742,78 @@ function TicketDetails() {
                           },
                         }}
                       />
+
                       <Typography variant="body2">
                         {recommendation.score.toFixed(0)}%
                       </Typography>
                     </Box>
 
                     <Collapse in={expanded}>
-                      <Typography sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+                      <Typography
+                        sx={{ fontWeight: 600, mt: 2, mb: 1 }}
+                      >
                         Why recommended?
                       </Typography>
 
-                      {recommendation.reasons.map((reason, reasonIndex) => (
-                        <Typography
-                          key={reasonIndex}
-                          variant="body2"
-                          sx={{ mb: 0.5 }}
-                        >
-                          • {reason}
-                        </Typography>
-                      ))}
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        {recommendation.explanation || 'No explanation provided.'}
+                      </Typography>
+
+                      <Divider sx={{ mb: 2 }} />
+
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 3,
+                        }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                          >
+                            Skill Match
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {recommendation.skillScore}%
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                          >
+                            Experience
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {recommendation.experienceScore}%
+                          </Typography>
+                        </Box>
+
+                        <Box>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                          >
+                            Available Capacity
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {recommendation.availableCapacity}/
+                            {recommendation.maxCapacity}
+                          </Typography>
+                        </Box>
+                      </Box>
                     </Collapse>
                   </Box>
                 );

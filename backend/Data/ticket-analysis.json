@@ -1,34 +1,144 @@
 [
   {
+    "TicketId": 1,
+    "Category": "Networking \u0026 Security",
+    "RequiredSkills": [
+      "VPN",
+      "Networking",
+      "Windows"
+    ],
+    "Summary": "VPN authentication timeouts after a Windows update."
+  },
+  {
     "TicketId": 2,
-    "Category": "Backend Development",
+    "Category": "Backend \u0026 APIs",
     "RequiredSkills": [
       "C#",
       ".NET",
-      "SQL",
-      "Database Troubleshooting"
+      "SQL"
     ],
-    "Summary": "The internal order management API intermittently fails with HTTP 500 errors caused by database connection timeouts."
+    "Summary": "ASP.NET Core API fails due to SQL connection pool exhaustion."
   },
   {
     "TicketId": 3,
-    "Category": "Containerization",
+    "Category": "DevOps \u0026 Containers",
     "RequiredSkills": [
       "Docker",
-      "Networking",
-      "Database Connectivity"
+      "Networking"
     ],
-    "Summary": "A Dockerized backend service could not reach PostgreSQL because of an incorrect database hostname."
+    "Summary": "Docker Compose database connectivity fails due to hostname configuration."
   },
   {
-    "TicketId": 1,
-    "Category": "Network \u0026 Remote Access",
+    "TicketId": 5,
+    "Category": "DevOps \u0026 Containers",
     "RequiredSkills": [
-      "VPN Configuration and Troubleshooting",
-      "Windows OS Administration",
-      "Network Authentication Protocols",
-      "Patch Management and Rollback"
+      "GitHub Actions",
+      "CI/CD",
+      ".NET"
     ],
-    "Summary": "Multiple employees are experiencing authentication timeout errors when attempting to connect to the corporate VPN following a recent Windows update."
+    "Summary": "GitHub Actions build fails because the project path is incorrect."
+  },
+  {
+    "TicketId": 6,
+    "Category": "Backend \u0026 APIs",
+    "RequiredSkills": [
+      "C#",
+      "ASP.NET Core",
+      "Middleware",
+      "JWT"
+    ],
+    "Summary": "JWT refresh failures caused by incorrect authentication middleware behavior."
+  },
+  {
+    "TicketId": 9,
+    "Category": "Frontend",
+    "RequiredSkills": [
+      "React",
+      "TypeScript",
+      "REST API"
+    ],
+    "Summary": "React form omits a required JSON property due to stale state."
+  },
+  {
+    "TicketId": 11,
+    "Category": "Cloud \u0026 AI",
+    "RequiredSkills": [
+      "AWS",
+      "Python",
+      "Cloud"
+    ],
+    "Summary": "AWS application startup fails because the IAM role cannot access secrets."
+  },
+  {
+    "TicketId": 12,
+    "Category": "Cloud \u0026 AI",
+    "RequiredSkills": [
+      "LiteLLM",
+      "Python",
+      "API Integration"
+    ],
+    "Summary": "LiteLLM requests fail due to an incorrect provider model mapping."
+  },
+  {
+    "TicketId": 13,
+    "Category": "DevOps \u0026 Containers",
+    "RequiredSkills": [
+      "Kubernetes",
+      "Docker",
+      "Linux"
+    ],
+    "Summary": "Kubernetes pods restart due to invalid startup and readiness settings."
+  },
+  {
+    "TicketId": 14,
+    "Category": "Networking \u0026 Security",
+    "RequiredSkills": [
+      "Python",
+      "Encryption",
+      "Security"
+    ],
+    "Summary": "Encryption key rotation breaks decryption of archived payloads."
+  },
+  {
+    "TicketId": 15,
+    "Category": "Frontend",
+    "RequiredSkills": [
+      "React",
+      "TypeScript",
+      "MUI"
+    ],
+    "Summary": "React table filters reset after route navigation."
+  },
+  {
+    "TicketId": 16,
+    "Category": "Cloud \u0026 AI",
+    "RequiredSkills": [
+      "Python",
+      "Data Validation"
+    ],
+    "Summary": "Python ETL pipeline crashes on invalid incoming records."
+  },
+  {
+    "TicketId": 19,
+    "Category": "Cloud \u0026 AI",
+    "RequiredSkills": [
+      "LiteLLM",
+      "Python",
+      "API Integration"
+    ],
+    "Summary": "LiteLLM gateway fails intermittently during concurrent requests."
+  },
+  {
+    "TicketId": 20,
+    "Category": "Kubernetes Secrets Management",
+    "RequiredSkills": [
+      "Kubernetes Secrets",
+      "Encryption",
+      "Namespace Configuration",
+      "RBAC (Role-Based Access Control)",
+      "Pod Security Policies",
+      "K8s Networking"
+    ],
+    "Summary": "A Kubernetes workload is failing to access secrets that have been encrypted, likely due to a misconfiguration in the namespace or an incorrect RBAC setup preventing access."
   }
 ]

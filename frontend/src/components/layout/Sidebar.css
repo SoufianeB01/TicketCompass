@@ -44,8 +44,29 @@
   color: white;
 }
 
+
 .sidebar-footer {
   margin-top: auto;
-  color: #b8c2d6;
-  font-size: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #34435c;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-model-icon {
+  color: #a5b4fc;
+}
+
+.sidebar-model-label {
+  color: #94a3b8;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.sidebar-model-name {
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
 }

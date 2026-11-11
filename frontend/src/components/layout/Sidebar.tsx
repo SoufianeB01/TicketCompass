@@ -1,19 +1,30 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   ExploreOutlined,
   DashboardOutlined,
   ConfirmationNumberOutlined,
   PeopleOutlined,
-  BarChartOutlined,
+  MenuBookOutlined,
+  AutoAwesomeOutlined,
 } from '@mui/icons-material';
+import { getActiveModel } from '../../services/api';
 import './Sidebar.css';
 
 function Sidebar() {
+  const [model, setModel] = useState('Loading...');
+
+  useEffect(() => {
+    getActiveModel()
+      .then(data => setModel(data.model))
+      .catch(() => setModel('Unavailable'));
+  }, []);
+
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: <DashboardOutlined /> },
     { name: 'Tickets', path: '/tickets', icon: <ConfirmationNumberOutlined /> },
     { name: 'Employees', path: '/employees', icon: <PeopleOutlined /> },
-    { name: 'Analytics', path: '/analytics', icon: <BarChartOutlined /> },
+    { name: 'Knowledge Base', path: '/knowledge-base', icon: <MenuBookOutlined /> },
   ];
 
   return (
@@ -24,7 +35,7 @@ function Sidebar() {
       </div>
 
       <nav className="sidebar-navigation">
-        {menuItems.map((item) => (
+        {menuItems.map(item => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -40,7 +51,12 @@ function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        Smart Support Assistant
+        <AutoAwesomeOutlined className="sidebar-model-icon" />
+
+        <div>
+          <div className="sidebar-model-label">ACTIVE LLM MODEL</div>
+          <div className="sidebar-model-name">{model}</div>
+        </div>
       </div>
     </aside>
   );

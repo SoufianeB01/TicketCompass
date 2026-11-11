@@ -3,6 +3,9 @@ import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Tickets from './pages/Tickets';
 import TicketDetails from './pages/TicketDetails';
+import Employees from './pages/Employees';
+import KnowledgeBase from './pages/KnowledgeBase';
+
 
 
 function App() {
@@ -13,8 +16,8 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/tickets/:id" element= {<TicketDetails />} />
-          <Route path="/employees" element={<h1>Employees</h1>} />
-          <Route path="/analytics" element={<h1>Analytics</h1>} />
+          <Route path="/employees" element={<Employees />} />
+          <Route path="/knowledge-base" element={<KnowledgeBase />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -2,19 +2,79 @@
   {
     "Id": 1,
     "Name": "Alex Morgan",
-    "Skills": ["Networking", "VPN", "Firewall", "DNS"],
+    "Skills": [
+      "Networking",
+      "VPN",
+      "Firewall",
+      "DNS",
+      "Encryption",
+      "Security"
+    ],
     "MaxCapacity": 5
   },
   {
     "Id": 2,
     "Name": "Sarah Chen",
-    "Skills": ["C#", ".NET", "SQL", "API Development"],
+    "Skills": [
+      "C#",
+      ".NET",
+      "ASP.NET Core",
+      "SQL",
+      "Middleware",
+      "REST API"
+    ],
     "MaxCapacity": 4
   },
   {
     "Id": 3,
     "Name": "Daniel Wilson",
-    "Skills": ["Azure", "Docker", "Linux", "Networking"],
-    "MaxCapacity": 3
+    "Skills": [
+      "Docker",
+      "Kubernetes",
+      "Linux",
+      "GitHub Actions",
+      "CI/CD",
+      "Azure"
+    ],
+    "MaxCapacity": 4
+  },
+  {
+    "Id": 4,
+    "Name": "Jane Doe",
+    "Skills": [
+      "React",
+      "TypeScript",
+      "JavaScript",
+      "MUI",
+      "REST API",
+      "Frontend"
+    ],
+    "MaxCapacity": 4
+  },
+  {
+    "Id": 5,
+    "Name": "John Doe",
+    "Skills": [
+      "AWS",
+      "Python",
+      "LiteLLM",
+      "Docker",
+      "API Integration",
+      "Cloud"
+    ],
+    "MaxCapacity": 4
+  },
+  {
+    "Id": 6,
+    "Name": "Emily Carter",
+    "Skills": [
+      "Python",
+      "Encryption",
+      "Security",
+      "Kubernetes",
+      "CI/CD",
+      "GitHub Actions"
+    ],
+    "MaxCapacity": 4
   }
 ]

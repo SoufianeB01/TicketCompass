@@ -33,7 +33,11 @@ export interface Recommendation {
   ticketId: number;
   employeeId: number;
   score: number;
-  reasons: string[];
+  skillScore: number;
+  experienceScore: number;
+  availableCapacity: number;
+  maxCapacity: number;
+  explanation: string;
 }
 
 export interface EmployeeProfile {
