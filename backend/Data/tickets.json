@@ -5,17 +5,21 @@
     "Description": "Several employees cannot connect to the company VPN after installing the latest Windows update. The VPN client displays an authentication timeout error.",
     "RequiredSkills": [],
     "Priority": "High",
-    "Status": "Open",
+    "Status": "Resolved",
     "CreatedAt": "2026-11-09T09:00:00Z",
-    "AssignedEmployeeId": null,
-    "Resolution": null,
-    "ResolvedAt": null
+    "AssignedEmployeeId": 1,
+    "Resolution": "XXX",
+    "ResolvedAt": "2026-11-11T11:29:30.9099969Z"
   },
   {
     "Id": 2,
     "Title": "Internal API returns HTTP 500",
     "Description": "The internal order management API intermittently returns HTTP 500 when retrieving order details. Application logs show database connection timeout errors.",
-    "RequiredSkills": ["C#", ".NET", "SQL"],
+    "RequiredSkills": [
+      "C#",
+      ".NET",
+      "SQL"
+    ],
     "Priority": "Critical",
     "Status": "InProgress",
     "CreatedAt": "2026-11-08T10:30:00Z",
@@ -27,7 +31,10 @@
     "Id": 3,
     "Title": "Docker container cannot connect to database",
     "Description": "A backend service running in Docker could not connect to its PostgreSQL database because the container was using an incorrect hostname.",
-    "RequiredSkills": ["Docker", "Networking"],
+    "RequiredSkills": [
+      "Docker",
+      "Networking"
+    ],
     "Priority": "Medium",
     "Status": "Resolved",
     "CreatedAt": "2026-11-05T08:00:00Z",

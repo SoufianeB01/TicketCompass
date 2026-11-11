@@ -1,10 +1,20 @@
 using TicketCompass.Api.Interfaces;
 using TicketCompass.Api.Services;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 //Register services
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // For converting enums to strings in JSON responses like "0" -> "Open"
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter()
+        );
+    });
+
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<ITicketService, TicketService>();

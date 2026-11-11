@@ -22,13 +22,13 @@
   },
   {
     "TicketId": 1,
-    "Category": "Remote Access",
+    "Category": "Network \u0026 Remote Access",
     "RequiredSkills": [
-      "VPN Troubleshooting",
-      "Windows Update Troubleshooting",
-      "Network Authentication",
-      "Windows Operating System Administration"
+      "VPN Configuration and Troubleshooting",
+      "Windows OS Administration",
+      "Network Authentication Protocols",
+      "Patch Management and Rollback"
     ],
-    "Summary": "Multiple employees are experiencing authentication timeout errors when connecting to the corporate VPN after a recent Windows update."
+    "Summary": "Multiple employees are experiencing authentication timeout errors when attempting to connect to the corporate VPN following a recent Windows update."
   }
 ]
