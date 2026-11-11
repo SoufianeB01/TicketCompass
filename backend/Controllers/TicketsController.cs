@@ -11,11 +11,13 @@ public class TicketsController : ControllerBase
 {
     private readonly ITicketService _ticketService;
     private readonly IEmployeeService _employeeService;
+    private readonly IEmployeeProfileService _employeeProfileService;
 
-    public TicketsController(ITicketService ticketService, IEmployeeService employeeService)
+    public TicketsController(ITicketService ticketService, IEmployeeService employeeService, IEmployeeProfileService employeeProfileService)
     {
         _ticketService = ticketService;
         _employeeService = employeeService;
+        _employeeProfileService = employeeProfileService;
     }
 
     // GET: api/tickets
@@ -80,11 +82,33 @@ public class TicketsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, Ticket ticket)
     {
+        var existingTicket = await _ticketService.GetByIdAsync(id);
         var updatedTicket = await _ticketService.UpdateAsync(id, ticket);
 
         if (updatedTicket == null)
         {
             return NotFound($"Ticket with ID {id} was not found.");
+        }
+
+        if (existingTicket != null)
+        {
+            if (existingTicket.Status == TicketStatus.Resolved &&
+                existingTicket.AssignedEmployeeId.HasValue)
+            {
+                await _employeeProfileService.MarkOutdatedAsync(
+                    existingTicket.AssignedEmployeeId.Value
+                );
+            }
+
+            if (updatedTicket.Status == TicketStatus.Resolved &&
+                updatedTicket.AssignedEmployeeId.HasValue &&
+                (existingTicket.Status != TicketStatus.Resolved ||
+                 existingTicket.AssignedEmployeeId != updatedTicket.AssignedEmployeeId))
+            {
+                await _employeeProfileService.MarkOutdatedAsync(
+                    updatedTicket.AssignedEmployeeId.Value
+                );
+            }
         }
 
         return Ok(updatedTicket);
@@ -142,6 +166,13 @@ public class TicketsController : ControllerBase
             return BadRequest("Ticket must be assigned and not already resolved.");
         }
 
+        if (resolvedTicket.AssignedEmployeeId.HasValue)
+        {
+            await _employeeProfileService.MarkOutdatedAsync(
+                resolvedTicket.AssignedEmployeeId.Value
+            );
+        }
+
         return Ok(resolvedTicket);
     }
 
@@ -149,11 +180,21 @@ public class TicketsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+        var ticket = await _ticketService.GetByIdAsync(id);
         var deleted = await _ticketService.DeleteAsync(id);
 
         if (!deleted)
         {
             return NotFound($"Ticket with ID {id} was not found.");
+        }
+
+        if (ticket != null &&
+            ticket.Status == TicketStatus.Resolved &&
+            ticket.AssignedEmployeeId.HasValue)
+        {
+            await _employeeProfileService.MarkOutdatedAsync(
+                ticket.AssignedEmployeeId.Value
+            );
         }
 
         return Ok("Ticket deleted successfully.");

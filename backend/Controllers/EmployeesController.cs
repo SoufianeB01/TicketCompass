@@ -12,10 +12,16 @@ public class EmployeesController : ControllerBase
     private readonly IEmployeeService _employeeService;
     private readonly ITicketService _ticketService;
 
-    public EmployeesController(IEmployeeService employeeService, ITicketService ticketService)
+    private readonly IEmployeeProfileService _employeeProfileService;
+
+    public EmployeesController(
+        IEmployeeService employeeService,
+        ITicketService ticketService,
+        IEmployeeProfileService employeeProfileService)
     {
         _employeeService = employeeService;
         _ticketService = ticketService;
+        _employeeProfileService = employeeProfileService;
     }
 
     // GET: api/employees
@@ -79,15 +85,24 @@ public class EmployeesController : ControllerBase
         );
     }
 
+    
     // PUT: api/employees/1
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, Employee employee)
     {
+        var existingEmployee = await _employeeService.GetByIdAsync(id);
         var updatedEmployee = await _employeeService.UpdateAsync(id, employee);
 
         if (updatedEmployee == null)
         {
             return NotFound($"Employee with ID {id} not found.");
+        }
+
+        if (existingEmployee != null &&
+            !existingEmployee.Skills.OrderBy(_skill => _skill)
+                .SequenceEqual(updatedEmployee.Skills.OrderBy(_skill => _skill)))
+        {
+            await _employeeProfileService.MarkOutdatedAsync(id);
         }
 
         return Ok(updatedEmployee);
@@ -104,6 +119,9 @@ public class EmployeesController : ControllerBase
             return NotFound($"Employee with ID {id} not found.");
         }
 
+        await _employeeProfileService.DeleteAsync(id);
+
         return Ok("Employee deleted successfully.");
     }
+
 }
