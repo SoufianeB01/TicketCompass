@@ -12,6 +12,7 @@ public class RecommendationService : IRecommendationService
     private readonly IAiAnalysisService _analysisService;
     private readonly ILlmService _llmService;
     private readonly string _promptPath;
+    private readonly string _recommendationsPath;
 
     private const double SkillWeight = 0.50;
     private const double ExperienceWeight = 0.30;
@@ -33,6 +34,11 @@ public class RecommendationService : IRecommendationService
             environment.ContentRootPath,
             "Prompts",
             "Recommendation.txt"
+        );
+        _recommendationsPath = Path.Combine(
+            environment.ContentRootPath,
+            "Data",
+            "recommendations.json"
         );
     }
 
@@ -185,9 +191,53 @@ public class RecommendationService : IRecommendationService
             });
         }
 
-        return recommendations
-            .OrderByDescending(r => r.Score)
-            .Take(3)
-            .ToList();
+        var topRecommendations = recommendations
+        .OrderByDescending(r => r.Score)
+        .Take(3)
+        .ToList();
+
+        await SaveRecommendationsAsync(ticketId, topRecommendations);
+
+        return topRecommendations;
+    }
+
+    private async Task SaveRecommendationsAsync(
+    int ticketId,
+    List<Recommendation> newRecommendations)
+    {
+        var allRecommendations = new List<Recommendation>();
+
+        if (File.Exists(_recommendationsPath))
+        {
+            var json = await File.ReadAllTextAsync(_recommendationsPath);
+
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                allRecommendations =
+                    JsonSerializer.Deserialize<List<Recommendation>>(
+                        json,
+                        new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        }
+                    ) ?? new List<Recommendation>();
+            }
+        }
+
+        // Remove previous recommendations for this ticket.
+        allRecommendations.RemoveAll(r => r.TicketId == ticketId);
+
+        // Add the newly generated top 3.
+        allRecommendations.AddRange(newRecommendations);
+
+        var updatedJson = JsonSerializer.Serialize(
+            allRecommendations,
+            new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }
+        );
+
+        await File.WriteAllTextAsync(_recommendationsPath, updatedJson);
     }
 }
